@@ -49,15 +49,39 @@ export const PASSAGE_VARIANTS = {
         'Same passage with 5 words deliberately misspelled — an accuracy test. Read it exactly as ' +
         'shown, mistakes included (highlighted in red below); the scorer should flag nangangalang, ' +
         'mangangarakal, ipinagtanggul, malawek, and naalala.',
+      // `text` is what's shown on screen and what the reader is instructed
+      // to read aloud — misspellings included. `referenceText` is what
+      // actually gets sent to the scorer as the "correct answer" (see
+      // ReadingScreen.jsx's handleSubmit). These MUST be different: the
+      // scorer only flags a mismatch between what you said and whatever
+      // reference text it's given — if the reference itself contained the
+      // same misspellings, reading them exactly as shown would score as
+      // 100% correct, since there'd be nothing to mismatch against. Keeping
+      // referenceText as the real, correctly-spelled passage is what makes
+      // this an actual accuracy test instead of a no-op.
       text:
         'Noong unang panahon, sa lupaing tinatawag ngayong Davao, may isang matapang na pinuno na nangangalang Datu Bago na mahusay na namuno sa kanyang mga tao. ' +
         'Tinanggap niya ang mga mangangarakal na dumating sa pamamagitan ng bangka at tinulungan ang kanyang komunidad na lumago. ' +
         'Nang dumating ang mga sundalong Espanyol, ipinagtanggul ni Datu Bago at ng kanyang mga mandirigma ang kanilang tahanan sa tabi ng malawek na ilog. ' +
         'Ang kanyang tapang ay naalala pa rin hanggang ngayon.',
+      referenceText: PASSAGES.fil.text,
       // Words to highlight in the passage card — the deliberate mistakes,
       // matched case-insensitively against each rendered word stripped of
       // punctuation (see ReadingScreen.jsx's renderPassageText).
       errorWords: ['nangangalang', 'mangangarakal', 'ipinagtanggul', 'malawek', 'naalala'],
+      // The answer key for this accuracy test — same 5 words/positions as
+      // gop/test_recordings/deliberate_errors.json. `index` is the 0-based
+      // position in referenceText's whitespace split, matching how the
+      // scorer numbers WordResult.index (see gop/basaquest_gop/scorer.py),
+      // so TeacherReviewScreen.jsx can line each planted error up directly
+      // against what the scorer actually flagged for that same index.
+      plantedErrors: [
+        { index: 14, correct: 'nagngangalang', misread: 'nangangalang' },
+        { index: 29, correct: 'mangangalakal', misread: 'mangangarakal' },
+        { index: 49, correct: 'ipinagtanggol', misread: 'ipinagtanggul' },
+        { index: 64, correct: 'malawak', misread: 'malawek' },
+        { index: 71, correct: 'naaalala', misread: 'naalala' },
+      ],
     },
     {
       id: 'grade-1-2',

@@ -203,6 +203,82 @@
   display: block;
 }
 
+.accuracy-check {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  background: var(--card-bg);
+}
+
+.accuracy-check h2 {
+  font-size: 16px;
+  margin: 0 0 4px;
+  color: var(--text-h);
+}
+
+.accuracy-check-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.accuracy-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.accuracy-check-row.caught {
+  background: var(--green-bg);
+}
+
+.accuracy-check-row.missed {
+  background: var(--red-bg);
+}
+
+.accuracy-check-icon {
+  font-weight: 700;
+  width: 16px;
+  text-align: center;
+}
+
+.accuracy-check-row.caught .accuracy-check-icon {
+  color: var(--green);
+}
+
+.accuracy-check-row.missed .accuracy-check-icon {
+  color: var(--red);
+}
+
+.accuracy-check-words {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.accuracy-check-arrow {
+  font-weight: 400;
+  opacity: 0.6;
+  margin: 0 2px;
+}
+
+.accuracy-check-status {
+  font-size: 12px;
+  opacity: 0.75;
+  margin-left: auto;
+}
+
+.accuracy-check-extra {
+  margin-top: 12px;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
 .flag-review h2 {
   font-size: 18px;
   margin-bottom: 12px;

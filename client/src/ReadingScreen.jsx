@@ -28,6 +28,10 @@ export default function ReadingScreen({ onSessionCreated }) {
   const [language, setLanguage] = useState('fil');
   const [variantId, setVariantId] = useState(PASSAGE_VARIANTS.fil[0].id);
   const [source, setSource] = useState(null); // 'recorded' | 'uploaded', once audio exists
+  // True when an uploaded file's duration couldn't be read in-browser (see
+  // handleFileSelected) — the 5s minimum-duration gate is skipped in that
+  // case rather than blocking the upload outright.
+  const [durationUnknown, setDurationUnknown] = useState(false);
 
   const variants = PASSAGE_VARIANTS[language];
   const passage = variants
@@ -56,6 +60,7 @@ export default function ReadingScreen({ onSessionCreated }) {
     audioBlobRef.current = null;
     setAudioUrl(null);
     setSeconds(0);
+    setDurationUnknown(false);
     setError(null);
     setSource(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -112,6 +117,7 @@ export default function ReadingScreen({ onSessionCreated }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
+    setDurationUnknown(false);
 
     // Read the file's actual duration client-side (the same instant-feedback
     // gate live recording gets) by loading it into a throwaway <audio>
@@ -129,8 +135,20 @@ export default function ReadingScreen({ onSessionCreated }) {
       setStatus(STATUS.RECORDED);
     });
     probe.addEventListener('error', () => {
-      URL.revokeObjectURL(url);
-      setError('Could not read that file as audio — try a different one.');
+      // The browser's own audio decoder couldn't read this file — often an
+      // .m4a using a codec (e.g. Apple Lossless/ALAC) that Chrome/Edge don't
+      // decode natively, even though the server's ffmpeg-based pipeline
+      // (audioQualityCheck.js, and the GOP scorer's audio.py) reads far more
+      // formats than any browser's <audio> element does. Don't hard-block
+      // the upload on that — let it through with duration unknown, and let
+      // the server's real check decide. The <audio> preview below will
+      // likely fail to play too, for the same reason, which is fine.
+      audioBlobRef.current = file;
+      setSeconds(0);
+      setDurationUnknown(true);
+      setAudioUrl(url);
+      setSource('uploaded');
+      setStatus(STATUS.RECORDED);
     });
   }
 
@@ -139,11 +157,21 @@ export default function ReadingScreen({ onSessionCreated }) {
     setError(null);
     try {
       const session = await submitRecording({
-        passageText: passage.text,
+        // referenceText, when a variant has one (currently just the "With
+        // Errors" test — see passage.js), is the correct passage the
+        // scorer checks against; passage.text is only what's shown on
+        // screen for the reader to read aloud. They're deliberately
+        // different for that variant — see passage.js's comment on why.
+        passageText: passage.referenceText || passage.text,
         audioBlob: audioBlobRef.current,
         language,
       });
-      onSessionCreated(session);
+      // The server has no idea this recording came from the "With Errors"
+      // accuracy test — it only ever sees plain passage text. Attach the
+      // answer key here, client-side, so TeacherReviewScreen.jsx can show a
+      // hit/miss scorecard against what the scorer actually flagged. Not
+      // present for any other passage.
+      onSessionCreated(passage.plantedErrors ? { ...session, plantedErrors: passage.plantedErrors } : session);
     } catch (err) {
       setError(err.message);
       setStatus(STATUS.RECORDED);
@@ -152,6 +180,7 @@ export default function ReadingScreen({ onSessionCreated }) {
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
   const ss = String(seconds % 60).padStart(2, '0');
+  const tooShort = !durationUnknown && seconds < MIN_DURATION_SECONDS;
 
   return (
     <div className="screen">
@@ -242,7 +271,14 @@ export default function ReadingScreen({ onSessionCreated }) {
               {source === 'uploaded' ? '📁 Uploaded file' : '🎙 Live recording'}
             </p>
             <audio controls src={audioUrl} />
-            {seconds < MIN_DURATION_SECONDS && (
+            {durationUnknown && (
+              <p className="source-note">
+                Couldn't check this file's length in the browser (the player above may not preview it
+                either) — that's a browser codec limitation, not a problem with the file. It'll still be
+                checked properly once you submit.
+              </p>
+            )}
+            {tooShort && (
               <p className="error">
                 That recording is only {seconds}s long — too short to be a full passage reading. Please
                 {source === 'uploaded' ? ' pick a different file.' : ' record again.'}
@@ -255,7 +291,7 @@ export default function ReadingScreen({ onSessionCreated }) {
               <button
                 className="btn btn-primary"
                 onClick={handleSubmit}
-                disabled={status === STATUS.SUBMITTING || seconds < MIN_DURATION_SECONDS}
+                disabled={status === STATUS.SUBMITTING || tooShort}
               >
                 {status === STATUS.SUBMITTING ? 'Scoring…' : 'Submit for Scoring'}
               </button>

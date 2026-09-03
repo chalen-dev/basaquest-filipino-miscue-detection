@@ -34,6 +34,25 @@ export default function TeacherReviewScreen({ session, onStartOver }) {
   );
   const orderedWords = useMemo(() => [...words].sort((a, b) => a.index - b.index), [words]);
 
+  // Only present when this session came from the "With Errors" test passage
+  // (see passage.js's plantedErrors, attached client-side in
+  // ReadingScreen.jsx's handleSubmit) — the answer key for a known set of
+  // deliberate mistakes, so we can show directly whether the scorer caught
+  // each one instead of making a teacher eyeball it against the flagged list.
+  const plantedErrors = session.plantedErrors || null;
+  const accuracyCheck = useMemo(() => {
+    if (!plantedErrors) return null;
+    return plantedErrors.map((pe) => {
+      const scored = words.find((w) => w.index === pe.index);
+      return { ...pe, caught: Boolean(scored && scored.status !== 'correct'), scoredStatus: scored?.status };
+    });
+  }, [plantedErrors, words]);
+  const extraFlags = useMemo(() => {
+    if (!plantedErrors) return [];
+    const plantedIndexes = new Set(plantedErrors.map((pe) => pe.index));
+    return flagged.filter((w) => !plantedIndexes.has(w.index));
+  }, [plantedErrors, flagged]);
+
   const reviewedCount = Object.values(review).filter((r) => r.reviewed).length;
   const allReviewed = flagged.length === 0 || reviewedCount === flagged.length;
 
@@ -125,6 +144,41 @@ export default function TeacherReviewScreen({ session, onStartOver }) {
           — estimated duration {session.durationSeconds}s
         </p>
       </div>
+
+      {accuracyCheck && (
+        <div className="accuracy-check">
+          <h2>
+            Accuracy Test: Planted Errors ({accuracyCheck.filter((a) => a.caught).length}/
+            {accuracyCheck.length} caught)
+          </h2>
+          <p className="passage-description">
+            This recording was read from the "With Errors" test passage — these 5 words were
+            deliberately misread. A correctly-working scorer should flag all 5.
+          </p>
+          <div className="accuracy-check-list">
+            {accuracyCheck.map((pe) => (
+              <div key={pe.index} className={`accuracy-check-row ${pe.caught ? 'caught' : 'missed'}`}>
+                <span className="accuracy-check-icon">{pe.caught ? '✓' : '✗'}</span>
+                <span className="accuracy-check-words">
+                  "{pe.misread}" <span className="accuracy-check-arrow">expected</span> "{pe.correct}"
+                </span>
+                <span className="accuracy-check-status">
+                  {pe.caught
+                    ? `caught as ${STATUS_LABEL[pe.scoredStatus] ?? pe.scoredStatus}`
+                    : 'missed — scored as correct'}
+                </span>
+              </div>
+            ))}
+          </div>
+          {extraFlags.length > 0 && (
+            <p className="accuracy-check-extra">
+              Also flagged {extraFlags.length} other word{extraFlags.length === 1 ? '' : 's'} not part of
+              this test: {extraFlags.map((w) => `"${w.word}"`).join(', ')} — ordinary acoustic borderline
+              calls, not planted errors.
+            </p>
+          )}
+        </div>
+      )}
 
       {flagged.length === 0 ? (
         <p className="all-correct">No words were flagged — every word was read correctly.</p>

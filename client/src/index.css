@@ -30,6 +30,26 @@
     --border: #2e303a;
     --card-bg: #1f2028;
     --code-bg: #2a2b33;
+
+    /* The light-mode versions of these (defined above) are a dark,
+       saturated foreground color meant to sit on a near-white tinted
+       background (e.g. --red: #b3261e on --red-bg: #fdeceb). Left
+       un-overridden here, that pairing survives into dark mode as a dark
+       foreground color, and only --text/--text-h switch to light colors —
+       so anything using the default text color on one of these tinted
+       backgrounds (accuracy-check-row.missed's word text, the "all
+       correct" banner, etc.) ends up light text on a near-white
+       background: unreadable. Flipped here to the standard dark-mode
+       pattern instead — light, saturated foreground colors on a
+       translucent tint of the same hue over the dark card background. */
+    --green: #4ade80;
+    --green-bg: rgba(74, 222, 128, 0.16);
+    --orange: #fbbf24;
+    --orange-bg: rgba(251, 191, 36, 0.16);
+    --red: #f87171;
+    --red-bg: rgba(248, 113, 113, 0.16);
+    --purple: #a78bfa;
+    --purple-bg: rgba(167, 139, 250, 0.18);
   }
 }
 
