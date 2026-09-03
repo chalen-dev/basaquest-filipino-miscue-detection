@@ -1,0 +1,26 @@
+# Phase 4 (GOP scoring) runs inference only - one forward pass over a short
+# clip - so the CPU build of torch is the right one. It is ~200MB installed
+# instead of ~2.5GB for the CUDA build, and no GPU is involved at any point.
+#
+#   python -m venv .venv
+#   .venv/Scripts/python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   .venv/Scripts/python.exe -m pip install -r gop/requirements.txt
+#
+# Deliberately NOT here: torchaudio. The plan was to use its `forced_align`,
+# but that function is deprecated with removal announced for 2.9 (torchaudio
+# is in maintenance mode - pytorch/audio#3902), so the ~60-line Viterbi
+# aligner is vendored in basaquest_gop/ctc_align.py instead. Nothing else in
+# this package needs torchaudio.
+
+torch>=2.0          # install from the CPU index, see above
+transformers>=4.30  # verified working on 5.14.1
+numpy>=1.24
+
+# calibrate.py only - reads the Phase 2 parquet shards. Same pins as
+# training/requirements.txt.
+pandas>=2.3
+pyarrow>=25.0
+
+# ffmpeg is required but is not a pip package. audio.py finds it via
+# $BASAQUEST_FFMPEG, then PATH, then the copy the Node server already ships
+# at server/node_modules/ffmpeg-static/.

@@ -1,0 +1,8 @@
+SERVER:
+cd server
+$env:SCORER_ENGINE = "gop"
+npm run dev
+
+CLIENT:
+cd client
+npm run dev

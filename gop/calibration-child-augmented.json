@@ -1,0 +1,9 @@
+{
+  "mispronounced_mean_gop": -1.3139688422285982,
+  "mispronounced_min_gop": -6.4864816963687275,
+  "omission_gop": -8.363488207459449,
+  "omission_max_extent_per_phoneme": 1.0,
+  "confidence_scale": 1.9927388529734646,
+  "reference_median_gop": 2.812481865286827,
+  "provenance": "calibrate.py on 300 val corpus utterances (>= 3 words, adult 20-27 read speech), false-positive rate 5.0%"
+}

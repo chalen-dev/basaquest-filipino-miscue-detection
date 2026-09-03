@@ -1,0 +1,9 @@
+{
+  "mispronounced_mean_gop": -0.2809366613623648,
+  "mispronounced_min_gop": -4.273184776306042,
+  "omission_gop": -5.568502552807331,
+  "omission_max_extent_per_phoneme": 1.225,
+  "confidence_scale": 1.4250133998725296,
+  "reference_median_gop": 1.3862156867980957,
+  "provenance": "calibrate.py on 1 real recording(s) of the 'builtin:fil' passage read correctly (recording2.m4a), adult speaker, false-positive rate 6.0%"
+}

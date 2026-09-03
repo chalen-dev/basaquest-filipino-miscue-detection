@@ -1,0 +1,58 @@
+{
+  "_comment": [
+    "Ground truth for the deliberate-mispronunciation recording. This is the",
+    "closest thing this project has to labelled mispronunciation data - the",
+    "ROADMAP notes the corpus has none - so it is recorded here as a file",
+    "rather than left in a chat log.",
+    "",
+    "`word_index` is the 0-based position in the whitespace-split reference",
+    "passage (client/src/passage.js, PASSAGES.fil.text), which is the same",
+    "indexing scorerInterface.js's WordResult.index uses. Every OTHER word in",
+    "the recording was read correctly, so any flag outside this list is a",
+    "false positive.",
+    "",
+    "Error types were chosen to be realistic pupil errors - vowel quality",
+    "swaps, l/r confusion, a dropped syllable. A wildly wrong word would be",
+    "trivially easy to catch and would flatter the results."
+  ],
+  "passage": "fil",
+  "passage_title": "Ang Pagtatanggol sa Ilog",
+  "reference_word_count": 76,
+  "errors": [
+    {
+      "word_index": 14,
+      "expected": "nagngangalang",
+      "read_as": "nangangalang",
+      "error_type": "dropped_consonant",
+      "note": "the /g/ in the -ngg- cluster is dropped"
+    },
+    {
+      "word_index": 29,
+      "expected": "mangangalakal",
+      "read_as": "mangangarakal",
+      "error_type": "liquid_substitution",
+      "note": "l -> r, a very common Filipino reading error"
+    },
+    {
+      "word_index": 49,
+      "expected": "ipinagtanggol",
+      "read_as": "ipinagtanggul",
+      "error_type": "vowel_substitution",
+      "note": "o -> u in the final syllable"
+    },
+    {
+      "word_index": 64,
+      "expected": "malawak",
+      "read_as": "malawek",
+      "error_type": "vowel_substitution",
+      "note": "a -> e in the final syllable"
+    },
+    {
+      "word_index": 71,
+      "expected": "naaalala",
+      "read_as": "naalala",
+      "error_type": "dropped_syllable",
+      "note": "one of the three a's is dropped"
+    }
+  ]
+}

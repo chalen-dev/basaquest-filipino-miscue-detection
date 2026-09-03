@@ -1,0 +1,19 @@
+{
+  "name": "basaquest-reading-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "ffmpeg-static": "^5.3.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.50.0",
+    "multer": "^1.4.5-lts.1",
+    "wavefile": "^11.0.0"
+  }
+}

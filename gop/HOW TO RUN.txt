@@ -1,0 +1,11 @@
+One time set up
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+Calbrate a model
+.venv\Scripts\python.exe calibrate.py --model-dir ../models/final-model-child-augmented-v1 --limit 300 --output calibration-child-augmented.json
+
+
+Test Recording
+.venv\Scripts\python.exe score_recording.py --audio test_recordings/<your-file> --passage builtin:fil --model-dir ../models/final-model-v2

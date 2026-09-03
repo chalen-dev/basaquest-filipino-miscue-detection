@@ -1,0 +1,30 @@
+# Large downloaded datasets/backups — never commit these
+data/
+training/processed/
+
+# Local Python envs for Phase 4 GOP inference (CPU torch is ~1GB installed) —
+# matches both this folder's own .venv and gop/.venv
+.venv/
+
+# The fine-tuned Phase 3/3.5 models (~1.2GB each) — hosted on Hugging Face
+# instead, see README.md's "GOP scorer" section for the download link
+models/
+
+# Python bytecode cache (gop/, g2p/)
+__pycache__/
+*.pyc
+
+# Node dependency folders — client/ and server/ each also have their own
+# .gitignore covering this, but this catches it repo-wide too
+node_modules/
+
+# JetBrains IDE project files (repo root — client/ and server/ already
+# ignore .idea in their own .gitignore, this covers the root-level one)
+.idea/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Scratch/working files, not part of the actual project
+Claude outputs/
