@@ -2,10 +2,13 @@
 // Vite's dev proxy (vite.config.js) forwards /api and /uploads to the
 // Express server, so these can stay relative paths.
 
-export async function submitRecording({ passageText, audioBlob, language }) {
+export async function submitRecording({ passageText, audioBlob, language, speaker = {} }) {
   const form = new FormData();
   form.append('passageText', passageText);
   form.append('language', language || 'en');
+  form.append('speakerId', speaker.speakerId || '');
+  form.append('grade', speaker.grade || '');
+  form.append('device', speaker.device || '');
   // audioBlob is either a MediaRecorder Blob (no .name, always webm) or a
   // File the user picked to upload (has its own .name/extension) — pass the
   // real filename through so the server (and, for the GOP scorer, ffmpeg)
@@ -23,11 +26,11 @@ export async function fetchSession(id) {
   return res.json();
 }
 
-export async function validateSession(id, { wordOverrides, validated }) {
+export async function validateSession(id, { wordOverrides, heard, validated }) {
   const res = await fetch(`/api/sessions/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ wordOverrides, validated }),
+    body: JSON.stringify({ wordOverrides, heard, validated }),
   });
   if (!res.ok) throw new Error('Failed to update session');
   return res.json();

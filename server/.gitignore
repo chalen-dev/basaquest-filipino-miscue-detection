@@ -2,3 +2,7 @@ node_modules
 uploads/*
 !uploads/.gitkeep
 *.local
+
+# Exported labeled recordings (children's audio) - never commit
+export/
+data/

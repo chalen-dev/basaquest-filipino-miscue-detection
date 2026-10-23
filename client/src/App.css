@@ -394,3 +394,65 @@
   gap: 12px;
   flex-wrap: wrap;
 }
+
+.speaker-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.speaker-form label {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.speaker-form input,
+.heard-input,
+.add-miss-chip {
+  font: inherit;
+  font-weight: 400;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.heard-input {
+  padding: 6px 8px;
+  min-width: 160px;
+}
+
+.add-miss {
+  margin: 16px 0;
+}
+
+.add-miss summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.add-miss-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.add-miss-chip {
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.add-miss-chip:hover:not(:disabled) {
+  border-color: var(--accent);
+}

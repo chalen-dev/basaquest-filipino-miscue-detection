@@ -25,7 +25,7 @@ const router = Router();
 // Create a new reading session: submits the recording + reference passage,
 // runs it through the active scorer, and returns the automated results.
 router.post('/sessions', upload.single('audio'), async (req, res) => {
-  const { passageText, language } = req.body;
+  const { passageText, language, speakerId, grade, device } = req.body;
   if (!req.file || !passageText) {
     return res.status(400).json({ error: 'audio file and passageText are required' });
   }
@@ -46,18 +46,25 @@ router.post('/sessions', upload.single('audio'), async (req, res) => {
       language: language || 'en',
     });
 
-    const session = createSession({
-      id: randomUUID(),
-      passageText,
-      language: language || 'en',
-      audioFilename: req.file.filename,
-      words: result.words.map((w) => ({ ...w, teacherStatus: null })),
-      durationSeconds: result.durationSeconds,
-      engine: result.engine,
-      status: 'pending_review',
-      createdAt: new Date().toISOString(),
-      validatedAt: null,
-    });
+    const session = createSession(
+      {
+        id: randomUUID(),
+        passageText,
+        language: language || 'en',
+        speaker: {
+          speakerId: speakerId?.trim() || null,
+          grade: grade?.trim() || null,
+          device: device?.trim() || null,
+        },
+        words: result.words.map((w) => ({ ...w, teacherStatus: null, heard: null })),
+        durationSeconds: result.durationSeconds,
+        engine: result.engine,
+        status: 'pending_review',
+        createdAt: new Date().toISOString(),
+        validatedAt: null,
+      },
+      { audioSourcePath: req.file.path }
+    );
 
     res.status(201).json(toSessionDto(session));
   } catch (err) {
@@ -75,13 +82,20 @@ router.get('/sessions/:id', (req, res) => {
 
 // Teacher submits per-word confirm/override decisions and marks the session validated.
 router.patch('/sessions/:id', (req, res) => {
-  const { wordOverrides, validated } = req.body;
+  const { wordOverrides, heard, validated } = req.body;
 
   const session = updateSession(req.params.id, (s) => {
     if (wordOverrides) {
       for (const [indexKey, teacherStatus] of Object.entries(wordOverrides)) {
         const word = s.words.find((w) => String(w.index) === indexKey);
         if (word) word.teacherStatus = teacherStatus;
+      }
+    }
+    // What the child actually said, for words the teacher marked mispronounced.
+    if (heard) {
+      for (const [indexKey, text] of Object.entries(heard)) {
+        const word = s.words.find((w) => String(w.index) === indexKey);
+        if (word) word.heard = String(text).trim() || null;
       }
     }
     if (validated) {
@@ -99,7 +113,8 @@ function toSessionDto(session) {
     id: session.id,
     passageText: session.passageText,
     language: session.language,
-    audioUrl: `/uploads/${session.audioFilename}`,
+    audioUrl: `/api/session-files/${session.id}/${session.audioFilename}`,
+    speaker: session.speaker,
     words: session.words,
     durationSeconds: session.durationSeconds,
     engine: session.engine,

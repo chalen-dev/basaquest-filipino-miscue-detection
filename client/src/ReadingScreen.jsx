@@ -32,6 +32,10 @@ export default function ReadingScreen({ onSessionCreated }) {
   // handleFileSelected) — the 5s minimum-duration gate is skipped in that
   // case rather than blocking the upload outright.
   const [durationUnknown, setDurationUnknown] = useState(false);
+  // Who read this and on what — saved with the session's labels so recordings
+  // can be grouped by speaker/device later. Use a code like "kid-07", never a
+  // real name.
+  const [speaker, setSpeaker] = useState({ speakerId: '', grade: '', device: '' });
 
   const variants = PASSAGE_VARIANTS[language];
   const passage = variants
@@ -165,6 +169,7 @@ export default function ReadingScreen({ onSessionCreated }) {
         passageText: passage.referenceText || passage.text,
         audioBlob: audioBlobRef.current,
         language,
+        speaker,
       });
       // The server has no idea this recording came from the "With Errors"
       // accuracy test — it only ever sees plain passage text. Attach the
@@ -221,6 +226,25 @@ export default function ReadingScreen({ onSessionCreated }) {
           </select>
         </div>
       )}
+
+      <div className="speaker-form">
+        {[
+          ['speakerId', 'Speaker ID', 'e.g. kid-07 (not a real name)'],
+          ['grade', 'Grade', 'e.g. 3'],
+          ['device', 'Device / mic', 'e.g. Redmi tablet'],
+        ].map(([field, label, placeholder]) => (
+          <label key={field}>
+            {label}
+            <input
+              type="text"
+              value={speaker[field]}
+              placeholder={placeholder}
+              disabled={status !== STATUS.IDLE}
+              onChange={(e) => setSpeaker((prev) => ({ ...prev, [field]: e.target.value }))}
+            />
+          </label>
+        ))}
+      </div>
 
       <div className="passage-card">
         <h2>{passage.title}</h2>

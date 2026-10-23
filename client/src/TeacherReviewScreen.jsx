@@ -16,7 +16,7 @@ export default function TeacherReviewScreen({ session, onStartOver }) {
     const initial = {};
     for (const w of session.words) {
       if (w.status !== 'correct') {
-        initial[w.index] = { finalStatus: w.status, reviewed: false };
+        initial[w.index] = { finalStatus: w.status, reviewed: false, heard: '' };
       }
     }
     return initial;
@@ -53,15 +53,46 @@ export default function TeacherReviewScreen({ session, onStartOver }) {
     return flagged.filter((w) => !plantedIndexes.has(w.index));
   }, [plantedErrors, flagged]);
 
-  const reviewedCount = Object.values(review).filter((r) => r.reviewed).length;
+  // Words the teacher is reviewing: every model-flagged word, plus any word
+  // the model called correct that the teacher added as a missed error.
+  const reviewList = useMemo(
+    () => orderedWords.filter((w) => review[w.index]),
+    [orderedWords, review]
+  );
+  const unflaggedWords = useMemo(
+    () => orderedWords.filter((w) => w.status === 'correct' && !review[w.index]),
+    [orderedWords, review]
+  );
+
+  const reviewedCount = flagged.filter((w) => review[w.index]?.reviewed).length;
   const allReviewed = flagged.length === 0 || reviewedCount === flagged.length;
 
   function setFinalStatus(index, finalStatus) {
-    setReview((prev) => ({ ...prev, [index]: { finalStatus, reviewed: true } }));
+    setReview((prev) => ({ ...prev, [index]: { ...prev[index], finalStatus, reviewed: true } }));
   }
 
   function confirmAsIs(index, autoStatus) {
-    setReview((prev) => ({ ...prev, [index]: { finalStatus: autoStatus, reviewed: true } }));
+    setReview((prev) => ({ ...prev, [index]: { ...prev[index], finalStatus: autoStatus, reviewed: true } }));
+  }
+
+  function setHeard(index, heard) {
+    setReview((prev) => ({ ...prev, [index]: { ...prev[index], heard } }));
+  }
+
+  // The model called this word correct but the teacher heard an error.
+  function addMissedError(index) {
+    setReview((prev) => ({
+      ...prev,
+      [index]: { finalStatus: 'mispronounced', reviewed: true, heard: '', added: true },
+    }));
+  }
+
+  function removeMissedError(index) {
+    setReview((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
   }
 
   // Small buffer around the word's exact timestamps — Whisper's word boundaries can be
@@ -108,7 +139,12 @@ export default function TeacherReviewScreen({ session, onStartOver }) {
       const wordOverrides = Object.fromEntries(
         Object.entries(review).map(([index, r]) => [index, r.finalStatus])
       );
-      const updated = await validateSession(session.id, { wordOverrides, validated: true });
+      const heard = Object.fromEntries(
+        Object.entries(review)
+          .filter(([, r]) => r.finalStatus === 'mispronounced' && r.heard.trim())
+          .map(([index, r]) => [index, r.heard])
+      );
+      const updated = await validateSession(session.id, { wordOverrides, heard, validated: true });
       setWords(updated.words);
       setValidated(true);
     } catch (err) {
@@ -180,56 +216,105 @@ export default function TeacherReviewScreen({ session, onStartOver }) {
         </div>
       )}
 
-      {flagged.length === 0 ? (
+      {flagged.length === 0 && (
         <p className="all-correct">No words were flagged — every word was read correctly.</p>
-      ) : (
+      )}
+
+      {reviewList.length > 0 && (
         <div className="flag-review">
           <h2>
             Flagged Words ({reviewedCount}/{flagged.length} reviewed)
           </h2>
-          {flagged.map((w) => (
-            <div className={`flag-row status-${w.status}`} key={`${w.index}-${w.word}`}>
-              <div className="flag-row-main">
-                <span className="flag-word">"{w.word}"</span>
-                <span className={`badge badge-${w.status}`}>{STATUS_LABEL[w.status]}</span>
-                <span className="confidence">confidence {Math.round(w.confidence * 100)}%</span>
-                {review[w.index]?.reviewed && <span className="reviewed-tick">✓ reviewed</span>}
-              </div>
-              <div className="flag-row-controls">
-                {w.startTime != null ? (
-                  <button
-                    className="btn btn-small btn-secondary"
-                    onClick={() => playWordChunk(w.index, w.startTime, w.endTime)}
+          {reviewList.map((w) => {
+            const r = review[w.index];
+            return (
+              <div className={`flag-row status-${r.added ? 'mispronounced' : w.status}`} key={`${w.index}-${w.word}`}>
+                <div className="flag-row-main">
+                  <span className="flag-word">"{w.word}"</span>
+                  {r.added ? (
+                    <span className="badge badge-mispronounced">Missed by model</span>
+                  ) : (
+                    <>
+                      <span className={`badge badge-${w.status}`}>{STATUS_LABEL[w.status]}</span>
+                      <span className="confidence">confidence {Math.round(w.confidence * 100)}%</span>
+                    </>
+                  )}
+                  {r.reviewed && !r.added && <span className="reviewed-tick">✓ reviewed</span>}
+                </div>
+                <div className="flag-row-controls">
+                  {w.startTime != null ? (
+                    <button
+                      className="btn btn-small btn-secondary"
+                      onClick={() => playWordChunk(w.index, w.startTime, w.endTime)}
+                    >
+                      {playingWordIndex === w.index ? '▶ Playing…' : `▶ Play ${w.startTime.toFixed(1)}s–${w.endTime.toFixed(1)}s`}
+                    </button>
+                  ) : (
+                    <span className="no-audio-note" title="This word was never heard in the recording, so there's no audio moment to play">
+                      no audio (omitted)
+                    </span>
+                  )}
+                  {r.added ? (
+                    <button
+                      className="btn btn-small btn-secondary"
+                      disabled={validated}
+                      onClick={() => removeMissedError(w.index)}
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-small btn-secondary"
+                      disabled={validated}
+                      onClick={() => confirmAsIs(w.index, w.status)}
+                    >
+                      Confirm as {STATUS_LABEL[w.status]}
+                    </button>
+                  )}
+                  <select
+                    disabled={validated}
+                    value={r.finalStatus}
+                    onChange={(e) => setFinalStatus(w.index, e.target.value)}
                   >
-                    {playingWordIndex === w.index ? '▶ Playing…' : `▶ Play ${w.startTime.toFixed(1)}s–${w.endTime.toFixed(1)}s`}
-                  </button>
-                ) : (
-                  <span className="no-audio-note" title="This word was never heard in the recording, so there's no audio moment to play">
-                    no audio (omitted)
-                  </span>
-                )}
-                <button
-                  className="btn btn-small btn-secondary"
-                  disabled={validated}
-                  onClick={() => confirmAsIs(w.index, w.status)}
-                >
-                  Confirm as {STATUS_LABEL[w.status]}
-                </button>
-                <select
-                  disabled={validated}
-                  value={review[w.index]?.finalStatus ?? w.status}
-                  onChange={(e) => setFinalStatus(w.index, e.target.value)}
-                >
-                  {STATUS_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      Override: {STATUS_LABEL[opt]}
-                    </option>
-                  ))}
-                </select>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        Override: {STATUS_LABEL[opt]}
+                      </option>
+                    ))}
+                  </select>
+                  {r.finalStatus === 'mispronounced' && (
+                    <input
+                      type="text"
+                      className="heard-input"
+                      disabled={validated}
+                      placeholder="what the child said (optional)"
+                      value={r.heard}
+                      onChange={(e) => setHeard(w.index, e.target.value)}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+      )}
+
+      {!validated && unflaggedWords.length > 0 && (
+        <details className="add-miss">
+          <summary>Heard an error the model missed? Click the word to add it</summary>
+          <div className="add-miss-chips">
+            {unflaggedWords.map((w) => (
+              <button
+                key={`${w.index}-${w.word}`}
+                type="button"
+                className="add-miss-chip"
+                onClick={() => addMissedError(w.index)}
+              >
+                {w.word}
+              </button>
+            ))}
+          </div>
+        </details>
       )}
 
       {error && <p className="error">{error}</p>}
