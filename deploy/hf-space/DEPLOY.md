@@ -26,7 +26,7 @@ Expect roughly the length of the recording, or a bit more, to score it
 # from the repo root
 powershell -File deploy\hf-space\prepare.ps1        # builds deploy\hf-space\build (1.2 GB)
 
-hf repo create YOUR-USERNAME/basaquest-filipino-scorer --repo-type space --space-sdk docker --private
+hf repos create YOUR-USERNAME/basaquest-filipino-scorer --repo-type space --space-sdk docker --private
 hf upload YOUR-USERNAME/basaquest-filipino-scorer deploy\hf-space\build . --repo-type space
 ```
 
