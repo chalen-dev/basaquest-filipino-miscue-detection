@@ -1,0 +1,5 @@
+# torch is installed separately, from the CPU index (see Dockerfile).
+fastapi>=0.110
+uvicorn>=0.29
+transformers>=4.30
+numpy>=1.24

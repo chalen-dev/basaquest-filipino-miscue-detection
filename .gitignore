@@ -28,3 +28,6 @@ Thumbs.db
 
 # Scratch/working files, not part of the actual project
 Claude outputs/
+
+# Hugging Face Space bundle (copy of the model; rebuilt by deploy/hf-space/prepare.ps1)
+deploy/hf-space/build/
