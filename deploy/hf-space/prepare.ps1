@@ -37,5 +37,18 @@ $modelTarget = Join-Path $build 'models\final-model-v2'
 New-Item -ItemType Directory -Path $modelTarget -Force | Out-Null
 Get-ChildItem $modelSource -File | Where-Object { $_.Name -ne 'training_args.bin' } | Copy-Item -Destination $modelTarget
 
+# The CPU build of torch, fetched here from the fast address (see the Dockerfile for why
+# the image build does not download it itself). Skipped if the file is already there.
+$wheelName = 'torch-2.15.0+cpu-cp311-cp311-manylinux_2_28_x86_64.whl'
+$wheelDir = Join-Path $build 'wheels'
+New-Item -ItemType Directory -Path $wheelDir -Force | Out-Null
+$wheelPath = Join-Path $wheelDir $wheelName
+$wheelCache = Join-Path $here $wheelName
+if (-not (Test-Path $wheelCache)) {
+    Write-Host 'Downloading the CPU build of torch (about 210 MB)...'
+    curl.exe -L --fail --retry 5 -o $wheelCache ('https://download.pytorch.org/whl/cpu/torch-2.15.0%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl')
+}
+Copy-Item $wheelCache $wheelPath
+
 $size = [math]::Round(((Get-ChildItem $build -Recurse -File | Measure-Object Length -Sum).Sum) / 1MB)
 Write-Host "Built $build ($size MB) from model '$Model' and calibration '$Calibration'."
