@@ -83,6 +83,11 @@ def _score(words: list[str], audio: bytes) -> dict:
                 "status": w["status"],
                 "confidence": w.get("confidence", 0.0),
                 "unscorable": bool(w.get("unscorable", False)),
+                # For the pronunciation and fluency estimates: how well the word fit,
+                # and when it was heard (absent for an omitted word).
+                "meanGop": w.get("meanGop"),
+                "startTime": w.get("startTime"),
+                "endTime": w.get("endTime"),
             }
             for w in result["words"]
         ],
